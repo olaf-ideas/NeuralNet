@@ -1,6 +1,10 @@
+#pragma GCC optimize("Ofast","unroll-loops","omit-frame-pointer","inline")
+#pragma GCC option("arch=native","tune=native","no-zero-upper")
+#pragma GCC target("avx2","popcnt","rdrnd","bmi2")
+
 #include <bits/stdc++.h>
 
-#include "nn.h"
+#include "nnv2.h"
 #include "mnist.h"
 
 void print_data(mnist_data &data) {
@@ -52,27 +56,27 @@ int main() {
 
     //print_data(train[0]);
 
-    NeuralNet nn({28 * 28, 100, 200, 10}, 0.001f, 0.5f);
+    // NeuralNetwork nn({28 * 28, 64, 256, 128, 10}, {TANH, RELU, RELU, TANH}, 0.001f, 0.3f);
+    NeuralNetwork nn("nn/mnist-test.nn", 0.0001f, 0.5f);
 
-    for(int epoch = 0; epoch < 10; epoch++) {
-        int input_done = 0;
+    const int BATCH_SIZE = 1000;
 
+    for(int epoch = 0; epoch < 100; epoch++) {
         std::random_shuffle(train, train + train_cnt);
+        for(int sample = 0; sample < train_cnt; sample++) {
+        // for(int batch = 0; batch < 10000; batch++) {
+            // int sample = rand() % train_cnt;
 
-        for(int batch = 0; batch < train_cnt; batch += 100) {
-            for(int rep = 0; rep < 1000; rep++) {
-                int sample = rand() % 100 + batch;
+            static float input[28 * 28];
+            static float target[10];
+            static float output[10];
 
-                static float input[784];
-                static float target[10];
-                static float output[10];
+            load_sample(train[sample], input, target);
 
-                load_sample(train[sample], input, target);
-
-                nn.forward(input, output);
-                nn.backprop(target);
-            }
+            nn.forward(input, output);
+            nn.backprop(target);
         }
+        fprintf(stderr, "training done\n");
 
         int correct = 0;
         for(int sample = 0; sample < test_cnt; sample++) {
@@ -83,6 +87,11 @@ int main() {
             load_sample(test[sample], input, target);
 
             nn.forward(input, output);
+
+            // for(int i = 0; i < 10; i++) {
+            //     fprintf(stderr, "%f ", output[i]);
+            // }
+            // fprintf(stderr, "\n");
 
             int label = 0;
             float value = output[0];
@@ -98,7 +107,7 @@ int main() {
             }
         }
 
-        printf("currectness: %f %\n", correct / float(test_cnt) * 100);
+        printf("currectness: %f (%d/%d)\n", correct / float(test_cnt) * 100, correct, test_cnt);
     }
 
     nn.save("nn/mnist-test.nn");

@@ -9,8 +9,8 @@
 
 float rand_0_to_1() { return rand() / float(RAND_MAX); }
 
-float activation(float x) { return tanh(x); }
-float dactivation(float x) { return 1 - x * x; }
+float  activation(float x) { return x < 0 ? 0 : x; }
+float dactivation(float x) { return x < 0 ? 0 : 1; }
 
 class NeuralNet {
 

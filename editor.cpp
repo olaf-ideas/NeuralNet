@@ -2,9 +2,9 @@
 
 #include <SFML/Graphics.hpp>
 
-#include "nn.h"
+#include "nnv2.h"
 
-NeuralNet nn("nn/mnist-96.4%.nn");
+NeuralNetwork nn("nn/mnist-test.nn");
 
 const int HEIGHT = 280;
 const int WIDTH  = 280;
