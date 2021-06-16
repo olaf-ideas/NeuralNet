@@ -1,6 +1,10 @@
 #ifndef NNv2_H
 #define NNv2_H
 
+#pragma GCC optimize("Ofast","unroll-loops","omit-frame-pointer","inline")
+#pragma GCC option("arch=native","tune=native","no-zero-upper")
+#pragma GCC target("avx2","popcnt","rdrnd","bmi2")
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -173,6 +177,37 @@ public:
         fclose(nn_file);
     }
 
+    void load(std::stringstream &ss) {
+
+        int layers_count;
+        ss >> layers_count;
+
+        int* layers_sizes = (int*) malloc(layers_count * sizeof(int));
+        for(int layer = 0; layer < layers_count; layer++) {
+            ss >> layers_sizes[layer];
+        }
+
+        ActivationType *activation = (ActivationType*) malloc((layers_count - 1) * sizeof(ActivationType));
+        for(int layer = 0; layer < layers_count - 1; layer++) {
+            int type;
+            ss >> type;
+            activation[layer] = ActivationType(type);
+        }
+
+        create(layers_sizes, layers_count, activation);
+
+        for(int layer = 0; layer < layers_count - 1; layer++) {
+            for(int curr = 0; curr <= layers_sizes[layer]; curr++) {
+                for(int next = 0; next < layers_sizes[layer + 1]; next++) {
+                    ss >> m_weights[layer][curr][next];
+                }
+            }
+        }
+
+        free(layers_sizes);
+        free(activation);
+    }
+
     void forward(const float *input, float *output) {
         for(int node = 0; node < m_layers_sizes[0]; node++) {
             m_value[0][node] = input[node];
@@ -247,6 +282,10 @@ public:
                   float learning_rate = 0.15f, float momentum_rate = 0.5f) : 
         m_learning_rate(learning_rate), m_momentum_rate(momentum_rate) {
         load(filename);
+    }
+
+    NeuralNetwork(std::stringstream &ss) {
+        load(ss);
     }
 
     ~NeuralNetwork() {
